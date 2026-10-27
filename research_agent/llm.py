@@ -1,20 +1,28 @@
 
+import os
+
+from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 
-from research_agent.config import settings
+load_dotenv()
 
 
 def get_llm() -> ChatGroq:
-    """Initialize and return the Groq language model."""
+    """Create and return the configured Groq chat model."""
+
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise EnvironmentError(
+            "GROQ_API_KEY is missing. Add it to your .env file."
+        )
+
+    model = os.getenv(
+        "GROQ_MODEL")
+
     return ChatGroq(
-        model=settings.groq_model,
-        api_key=settings.groq_api_key.get_secret_value(),
-        temperature=0.1,
+        model=model,
+        api_key=api_key,
+        temperature=0,
         max_retries=2,
-        timeout=30,
+        timeout=60,
     )
-
-
-def get_tool_calling_llm(tools: list) -> ChatGroq:
-    """Return the model configured with available tools."""
-    return get_llm().bind_tools(tools)

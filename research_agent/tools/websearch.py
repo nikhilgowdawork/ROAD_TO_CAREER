@@ -1,32 +1,43 @@
 
-from langchain_core.tools import tool
-from tavily import TavilyClient
+import os
 
-from research_agent.config import settings
+from tavily import TavilyClient
+from langchain_core.tools import tool
 
 
 @tool
-def search_web(query: str) -> dict:
-    """Search the web for current information relevant to a research question.
-    
-    Use this tool to discover relevant webpages, job listings, official
-    documentation, and industry discussions. Returns results with titles,
-    URLs, and content snippets.
+def search_web(
+    query: str,
+    max_results: int = 3,
+) -> dict:
+    """Search the web for current information relevant to a research query.
+
+    Args:
+        query: A specific topic, question, technology, or job requirement.
+        max_results: Maximum number of search results to return (1-10).
     """
-    query = query.strip()
+    if not query or not query.strip():
+        return {"error": "Search query cannot be empty.", "results": []}
 
-    if not query:
-        return {"error": "Search query cannot be empty."}
+    max_results = max(1, min(max_results, 3))
 
-    client = TavilyClient(
-        api_key=settings.tavily_api_key.get_secret_value()
-    )
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        return {
+            "error": "TAVILY_API_KEY is not configured.",
+            "results": [],
+        }
 
     try:
+        client = TavilyClient(api_key=api_key)
+
         response = client.search(
-            query=query,
-            search_depth="basic",
-            max_results=5,
+            query=query.strip(),
+            max_results=max_results,
+            search_depth="advanced",
+            topic="general",
+            include_answer=False,
+            include_raw_content=False,
         )
 
         results = [
@@ -34,17 +45,19 @@ def search_web(query: str) -> dict:
                 "title": item.get("title", ""),
                 "url": item.get("url", ""),
                 "content": item.get("content", ""),
+                "score": item.get("score", 0),
             }
             for item in response.get("results", [])
         ]
 
         return {
-            "query": query,
-            "results": results,
+            "query": query.strip(),
             "result_count": len(results),
+            "results": results,
         }
 
     except Exception as exc:
-        raise RuntimeError(
-            f"Web search failed: {type(exc).__name__}"
-        ) from exc
+        return {
+            "error": f"Web search failed: {type(exc).__name__}: {exc}",
+            "results": [],
+        }

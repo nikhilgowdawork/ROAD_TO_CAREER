@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class settings(BaseSettings):
 
     groq_api_key: SecretStr
-    groq_model: str = "openai/gpt-oss-120b"
+    groq_model: str
 
     tavily_api_key: SecretStr
 
