@@ -6,16 +6,16 @@ from langchain_core.tools import tool
 
 
 @tool
-def search_web(
-    query: str,
-    max_results: int = 3,
-) -> dict:
+def search_web(query: str ) -> dict:
+
     """Search the web for current information relevant to a research query.
 
     Args:
         query: A specific topic, question, technology, or job requirement.
         max_results: Maximum number of search results to return (1-10).
     """
+    max_results = 3
+
     if not query or not query.strip():
         return {"error": "Search query cannot be empty.", "results": []}
 
